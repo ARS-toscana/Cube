@@ -34,15 +34,14 @@ assigned_levels[["Gender"]] <- c("Gender")
 # assign the intervals needed to create FiveYears
 
 assigned_rule <- vector(mode="list")
-assigned_rule[["CalendarTime"]][["FiveYears"]] <- list("split_in_bands",c(2020,2025,2030))
+assigned_rule[["CalendarTime"]][["FiveYears"]] <- list("split_in_bands","Year",c(2020,2025,2030))
 
+# apply the function
 
 output <- Cube(input = data_example,
                dimensions = c("Geography","CalendarTime","Gender"),
                levels = assigned_levels,
                measures = c("N"),
-               donotcomputetotal = c("Geography","CalendarTime"),
+               computetotal = c("Gender"),
                rule_from_numeric_to_categorical = assigned_rule
-               )
-
-
+)
