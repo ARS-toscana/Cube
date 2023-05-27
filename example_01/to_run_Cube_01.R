@@ -19,6 +19,7 @@ if (!require("data.table")) install.packages("data.table")
 library(data.table)
 library(lubridate)
 
+source("Cube.R")
 
 #load input
 data_example <- fread(paste0(thisdir,"/input/data_example1.csv"), sep = ",")
@@ -34,7 +35,7 @@ assigned_levels[["Gender"]] <- c("Gender")
 # assign the intervals needed to create FiveYears
 
 assigned_rule <- vector(mode="list")
-assigned_rule[["CalendarTime"]][["FiveYears"]] <- list("split_in_bands","Year",c(2020,2025,2030))
+assigned_rule[["CalendarTime"]][["FiveYears"]] <- list("split_in_bands","Year", c(2020,2025,2030))
 
 # apply the function
 
