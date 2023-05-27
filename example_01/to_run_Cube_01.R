@@ -19,7 +19,7 @@ if (!require("data.table")) install.packages("data.table")
 library(data.table)
 library(lubridate)
 
-source("Cube.R")
+source("../Cube.R")
 
 #load input
 data_example <- fread(paste0(thisdir,"/input/data_example1.csv"), sep = ",")
