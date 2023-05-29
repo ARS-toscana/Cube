@@ -34,7 +34,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
       }
     }
   }
-
+  
   # Calculate the statistics
   input <- data.table::groupingsets(input, j = list(eval(parse(text = 'do.call("sum", .SD)'))),
                                     by = unlist(levels, use.names = F),
@@ -70,6 +70,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   
   # Remove unnecessary columns and reorder the remaining ones
   input[, (unlist(multiple_levels)) := NULL]
+  setnames(input, names(levels), paste(names(levels), "label_value", sep = "-"))
   setcolorder(input, c(measures, names(levels), order_cols))
   
   return(input)
