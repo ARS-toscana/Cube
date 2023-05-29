@@ -17,7 +17,6 @@ diroutput <- paste0(thisdir,"/output/")
 # load data.table
 if (!require("data.table")) install.packages("data.table")
 library(data.table)
-library(lubridate)
 
 source("../Cube.R")
 
