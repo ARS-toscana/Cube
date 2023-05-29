@@ -16,7 +16,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
                                        function(x) levels[[dm]][which(levels[[dm]] == x):length(levels[[dm]])])))
     }
     result.df <- expand.grid(test)
-    result.list <- c(result.list, lapply(apply(result.df, 1, identity), unlist, use.names = F))
+    result.list <- unique(c(result.list, lapply(apply(result.df, 1, identity), unlist, use.names = F)))
   }
   
   # Add new variables based on existing levels
