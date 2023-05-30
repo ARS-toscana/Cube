@@ -35,12 +35,60 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
     }
   }
   
+  statistic_list <- list()
+  measure_list <- c()
+  measure_name_list <- c()
+  
+  measures <- setdiff(measures, names(statistics))
+
+  for (measure in measures) {
+    if (is.null(statistics)) {
+      statistic_list <- append(statistic_list, parse(text = "do.call(sum, .SD)"))
+      measure_value <- paste0(measure, "_sum")
+      measure_list <- c(measure_list, measure_value)
+      measure_name_list <- measure
+      
+      tmp <- data.table::groupingsets(input, jj = c(statistic_list),
+                                      by = unlist(levels, use.names = F),
+                                      sets = result.list,
+                                      .SDcols = measure_name_list)
+      setnames(tmp, "V1", measure_value)
+      # setnames(tmp, paste0("V", seq_along(measures)), measure_list)
+      
+      tmp_2 <- if (!exists("tmp_2")) copy(tmp) else cbind(tmp_2, tmp)
+      rm(tmp)
+      
+    } else {
+      for (statistic in statistics[[measure]]) {
+        measure_list <- paste(measure, statistic, sep = "_")
+        measure_name_list <- measure
+        if (!grepl("\\(", statistic)) {
+          statistic <- paste0("do.call(", statistic, ", .SD)")
+        }
+        statistic <- parse(text = statistic)
+        
+        tmp <- data.table::groupingsets(input, j = c(eval(statistic)),
+                                        by = unlist(levels, use.names = F),
+                                        sets = result.list,
+                                        .SDcols = measure_name_list)
+        setnames(tmp, "V1", measure_list)
+        # setnames(tmp, paste0("V", seq_along(measures)), measure_list)
+        
+        tmp_2 <- if (!exists("tmp_2")) copy(tmp) else cbind(tmp_2, tmp)
+        rm(tmp)
+      }
+    }
+  }
+  
+  input <- tmp_2
+  rm(tmp_2)
+  
   # Calculate the statistics
-  input <- data.table::groupingsets(input, j = list(eval(parse(text = 'do.call("sum", .SD)'))),
-                                    by = unlist(levels, use.names = F),
-                                    sets = result.list,
-                                    .SDcols = measures)
-  setnames(input, paste0("V", seq_along(measures)), measures)
+  # tmp <- data.table::groupingsets(input, j = c(eval(statistic_list)),
+  #                                   by = unlist(levels, use.names = F),
+  #                                   sets = result.list,
+  #                                   .SDcols = measures)
+  # setnames(input, paste0("V", seq_along(measures)), measure_name_list)
   
   # Filter to remove total for not necessary columns
   not_computetotal <- setdiff(names(levels), computetotal)
@@ -70,8 +118,8 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   
   # Remove unnecessary columns and reorder the remaining ones
   input[, (unlist(multiple_levels)) := NULL]
+  setcolorder(input, c(measure_list, names(levels), order_cols))
   setnames(input, names(levels), paste(names(levels), "label_value", sep = "-"))
-  setcolorder(input, c(measures, names(levels), order_cols))
   
   return(input)
 }
