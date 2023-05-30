@@ -1,5 +1,5 @@
 Cube <- function(input, dimensions, levels, measures, statistics = NULL, computetotal = NULL,
-                 rule_from_numeric_to_categorical = NULL, order = NULL, label = NULL) {
+                 rule_from_numeric_to_categorical = NULL, order = NULL, label = NULL, summary_threshold = NULL) {
   
   # Calculate all possible combination of the dimensions
   dimensions_combinations <- c()
@@ -119,7 +119,22 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   # Remove unnecessary columns and reorder the remaining ones
   input[, (unlist(multiple_levels)) := NULL]
   setcolorder(input, c(measure_list, names(levels), order_cols))
-  setnames(input, names(levels), paste(names(levels), "label_value", sep = "-"))
+  level_label_names <- paste(names(levels), "label_value", sep = "-")
+  setnames(input, names(levels), level_label_names)
+  
+  if (is.numeric(summary_threshold)) {
+ 
+    summary_threshold <- as.integer(summary_threshold)
+    tmp <- copy(input)
+    
+    for(measure in measure_list) {
+      tmp[, (measure) := fifelse(get(measure) < summary_threshold & get(measure) > 0, F, T)] 
+    }
+    
+    tmp <- tmp[, lapply(.SD, all), by = order_cols, .SDcols = measure_list]
+    
+    assign("summary_threshold", tmp, envir = parent.frame())
+  }
   
   return(input)
 }

@@ -43,5 +43,6 @@ output <- Cube(input = data_example,
                levels = assigned_levels,
                measures = c("N"),
                computetotal = c("Gender"),
-               rule_from_numeric_to_categorical = assigned_rule
+               rule_from_numeric_to_categorical = assigned_rule,
+               summary_threshold = 100
 )
