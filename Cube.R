@@ -19,6 +19,17 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
     result.list <- unique(c(result.list, lapply(apply(result.df, 1, identity), unlist, use.names = F)))
   }
   
+  if (!is.null(order)) {
+    for (dm in names(order)){
+      if (length(order[[dm]]) == 1) {
+        tmp <- unique(input[, unlist(c(names(order[[dm]]), order[[dm]]), use.names = F), with = F])
+        setorderv(tmp, unlist(order[[dm]]))
+        order[[dm]][[names(order[[dm]])]] <- unlist(tmp[, names(order[[dm]]), with = F], use.names = F)
+
+      }
+    }
+  }
+  
   # Add new variables based on existing levels
   for (dm in names(levels)) {
     for (new_var in names(assigned_rule[[dm]])) {
@@ -40,7 +51,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   measure_name_list <- c()
   
   measures <- setdiff(measures, names(statistics))
-
+  
   for (measure in measures) {
     if (is.null(statistics)) {
       statistic_list <- append(statistic_list, parse(text = "do.call(sum, .SD)"))
@@ -119,11 +130,28 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   # Remove unnecessary columns and reorder the remaining ones
   input[, (unlist(multiple_levels)) := NULL]
   setcolorder(input, c(measure_list, names(levels), order_cols))
+  
+  if (!is.null(order)) {
+    for (dm in names(order)){
+      ordered_list <- unlist(order[[dm]], use.names = F)
+      ordered_list <- c(ordered_list, sort(setdiff(unique(input[[dm]]), ordered_list)))
+
+      input <- merge(input,
+                     data.table::data.table(ordered_list, seq_along(ordered_list)),
+                     by.x = dm,
+                     by.y = "ordered_list",
+                     all.x = T)
+      setorderv(input, "V2")
+      
+      setnames(input, "V2", paste(dm, "value-order", sep = "_"))
+    }
+  }
+  
   level_label_names <- paste(names(levels), "label_value", sep = "-")
   setnames(input, names(levels), level_label_names)
   
   if (is.numeric(summary_threshold)) {
- 
+    
     summary_threshold <- as.integer(summary_threshold)
     tmp <- copy(input)
     
