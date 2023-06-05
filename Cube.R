@@ -1,6 +1,8 @@
 Cube <- function(input, dimensions, levels, measures, statistics = NULL, computetotal = NULL,
                  rule_from_numeric_to_categorical = NULL, order = NULL, label = NULL, summary_threshold = NULL) {
   
+  input <- copy(input)
+  
   # Calculate all possible combination of the dimensions
   dimensions_combinations <- c()
   for (i in seq_along(levels)) {
