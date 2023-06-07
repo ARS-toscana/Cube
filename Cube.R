@@ -1,7 +1,10 @@
 Cube <- function(input, dimensions, levels, measures, statistics = NULL, computetotal = NULL,
-                 rule_from_numeric_to_categorical = NULL, order = NULL, label = NULL, summary_threshold = NULL) {
+                 rule_from_numeric_to_categorical = NULL, order = NULL, label = NULL, summary_threshold = NULL,
+                 proportion = NULL) {
   
   input <- copy(input)
+  
+  accepted_functions <- c("sum", "mean", "max", "min", "median", "mode")
   
   # Calculate all possible combination of the dimensions
   dimensions_combinations <- c()
@@ -43,7 +46,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
           cut_labels <- c(cut_labels, paste(detail_new_var[[3]][[i]], detail_new_var[[3]][[i + 1]] - 1, sep = "-"))
         }
         
-        input <- input[, (new_var) := as.character(cut(get(..detail_new_var[[2]]), detail_new_var[[3]], cut_labels, right = F))]
+        input[, (new_var) := as.character(cut(get(..detail_new_var[[2]]), detail_new_var[[3]], cut_labels, right = F))]
       }
     }
   }
@@ -54,42 +57,51 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   
   measures <- setdiff(measures, names(statistics))
   
-  for (measure in measures) {
-    if (is.null(statistics)) {
-      statistic_list <- append(statistic_list, parse(text = "do.call(sum, .SD)"))
-      measure_value <- paste0(measure, "_sum")
-      measure_list <- c(measure_list, measure_value)
-      measure_name_list <- measure
+  if (!is.null(proportion)) {
+    proportion_measures <- unique(sapply(proportion, names))
+    
+    for (measure in measures) {
       
-      tmp <- data.table::groupingsets(input, jj = c(statistic_list),
+      if (measure %in% proportion_measures && is.null(statistics[[measure]])) {
+        statistics[[measure]] <- "sum"
+      }
+    }
+  }
+  
+  levels_vocabulary <- list()
+  for (dm in dimensions) {
+    lvl_voc <- unique(input[, levels[[dm]], with = F])
+    if (dm %in% computetotal) {
+      total_lvl <- paste0("All", dm)
+      lvl_voc[, (total_lvl) := total_lvl]
+    } 
+    levels_vocabulary[[dm]] <- lvl_voc
+  }
+  
+  for (measure in measures) {
+    for (statistic in statistics[[measure]]) {
+      
+      if (!(statistic %in% accepted_functions)) {
+        stop(paste(statistic, "is not an accepted function"))
+      }
+      
+      # else {
+      #   statistic <- paste0("do.call(", statistic, ", .SD)")
+      # }
+      
+      measure_list <- paste(measure, statistic, sep = "_")
+      measure_name_list <- measure
+      statistic <- parse(text = paste0("do.call(", statistic, ", .SD)"))
+      tmp <- data.table::groupingsets(input, jj = c(statistic),
                                       by = unlist(levels, use.names = F),
                                       sets = result.list,
                                       .SDcols = measure_name_list)
-      setnames(tmp, "V1", measure_value)
+      
+      setnames(tmp, "V1", measure_list)
       # setnames(tmp, paste0("V", seq_along(measures)), measure_list)
       
-      tmp_2 <- if (!exists("tmp_2")) copy(tmp) else cbind(tmp_2, tmp)
+      tmp_2 <- if (!exists("tmp_2")) copy(tmp) else cbind(tmp_2, tmp[, ncol(tmp), with = F])
       rm(tmp)
-      
-    } else {
-      for (statistic in statistics[[measure]]) {
-        measure_list <- paste(measure, statistic, sep = "_")
-        measure_name_list <- measure
-        if (!grepl("\\(", statistic)) {
-          statistic <- paste0("do.call(", statistic, ", .SD)")
-        }
-        statistic <- parse(text = statistic)
-        
-        tmp <- data.table::groupingsets(input, j = c(eval(statistic)),
-                                        by = unlist(levels, use.names = F),
-                                        sets = result.list,
-                                        .SDcols = measure_name_list)
-        setnames(tmp, "V1", measure_list)
-        # setnames(tmp, paste0("V", seq_along(measures)), measure_list)
-        
-        tmp_2 <- if (!exists("tmp_2")) copy(tmp) else cbind(tmp_2, tmp)
-        rm(tmp)
-      }
     }
   }
   
@@ -131,6 +143,56 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   
   # Remove unnecessary columns and reorder the remaining ones
   input[, (unlist(multiple_levels)) := NULL]
+  
+  # Create propotion
+  if (!is.null(proportion)) {
+    for (dm in names(proportion)) {
+      for (proportion_measure in names(proportion[[dm]])) {
+        for (denominator in proportion[[dm]][[proportion_measure]]) {
+          dm_order_name <- paste(dm, "order", sep = "_")
+          
+          temp <- copy(input)[get(dm_order_name) == denominator, ]
+          
+          # df_levels_vocabulary <- unique(copy(input)[, c(dm, dm_order_name), with = F])
+          # dcast(df_levels_vocabulary, Geography ~ Geography_order, value.var = "Geography")
+          
+          measure_name <- paste(proportion_measure, "denominator", sep = "_")
+          setnames(temp, paste(proportion_measure, "sum", sep = "_"), measure_name)
+          cols_keep <- c(measure_name, dimensions, paste(setdiff(dimensions, dm), "order", sep = "_"))
+          temp <- temp[, cols_keep, with = F]
+          # temp <- temp[get(dm_order_name) != 99, (dm_order_name) := get(dm_order_name) - 1]
+          # temp <- temp[get(dm_order_name) == 99, (dm_order_name) := -1]
+          # temp <- temp[get(dm_order_name) == -1, (dm_order_name) := .I[which.max(get(dm_order_name))] + 1]
+          
+          if (denominator == 99) {
+            denominator <- length(names(levels_vocabulary[[dm]]))
+          } 
+          level_to_recode <- names(levels_vocabulary[[dm]])[[denominator]]
+          
+          levels_vocabulary_df <- melt(levels_vocabulary[[dm]], id.vars = c(level_to_recode),
+                                       measure.vars = names(levels_vocabulary[[dm]]),
+                                       value.name = "V1")
+          levels_vocabulary_df[, variable := NULL]
+          levels_vocabulary_df <- unique(levels_vocabulary_df)
+          
+          temp2 <- temp[levels_vocabulary_df, on = c(paste(dm, "==", level_to_recode)), allow.cartesian = T]
+          temp2[, c(dm) := NULL]
+          setnames(temp2, "V1", dm)
+          
+          cols_group_by <- setdiff(cols_keep, measure_name)
+          
+          input <- merge(input, temp2, by = cols_group_by, all.x = T)
+          proportion_name <- paste("prop", dm, proportion_measure, denominator, sep = "_")
+
+          input[, (proportion_name) := get(paste(proportion_measure, "sum", sep = "_")) / get(measure_name)]
+          
+          input[, c(measure_name) := NULL]
+          
+        }
+      }
+    }
+  }
+  
   setcolorder(input, c(measure_list, names(levels), order_cols))
   
   if (!is.null(order)) {
