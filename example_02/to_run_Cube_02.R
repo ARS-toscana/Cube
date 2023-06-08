@@ -46,19 +46,20 @@ proportion_rule[["Gender"]][["N"]] <- 99
 assigned_order <- vector(mode="list")
 assigned_order[["Ageband"]][["ageband"]] <- "ageband_num"
 
+# assign the statistics
+
+assigned_statistics <- vector(mode="list")
+assigned_statistics[["N"]] <- c("sum")
+assigned_statistics[["age"]] <- c("mean","sd")
+assigned_statistics[["followup"]] <- "median"
 # apply the function
 
 output <- Cube(input = data_example,
                dimensions = c("Ageband","Gender"),
                levels = assigned_levels,
                measures = c("N","age","followup"),
-               computetotal = c("ageband","gender"),
-               statistics = list(
-                 list(c("sum") ,c("N")),
-                 list(c("proportion"),c("N")),
-                 list(c("mean","sd"),c("age")),
-                 list(c("median"),c("followup"))
-               ),
+               computetotal = c("Ageband","Gender"),
+               statistics = assigned_statistics,
                summary_threshold = 100,
                order = assigned_order,
                proportion = proportion_rule
@@ -66,4 +67,4 @@ output <- Cube(input = data_example,
 
 
 View(output)
-fwrite(output,file=paste0(diroutput,"/output.csv"))
+fwrite(output,file=paste0(diroutput,"output.csv"))
