@@ -52,7 +52,7 @@ output <- Cube(input = data_example,
                dimensions = c("Ageband","Gender"),
                levels = assigned_levels,
                measures = c("N","age","followup"),
-               computetotal = c("Ageband","Gender"),
+               computetotal = c("ageband","gender"),
                statistics = list(
                  list(c("sum") ,c("N")),
                  list(c("proportion"),c("N")),
