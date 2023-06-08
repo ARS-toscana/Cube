@@ -21,49 +21,49 @@ library(data.table)
 source("../Cube.R")
 
 #load input
-data_example <- fread(paste0(thisdir,"/input/data_example1.csv"), sep = ",")
+data_example <- fread(paste0(thisdir,"/input/data_example2.csv"), sep = ",")
+
 
 #USE THE FUNCTION 
 
+# create the count variable
+
+data_example <- data_example[, N := 1]
+
 # assign the levels of each dimension
 assigned_levels <- vector(mode="list")
-assigned_levels[["Geography"]] <- c("Location","Country","Continent")
-assigned_levels[["CalendarTime"]] <- c("Year","FiveYears")
-assigned_levels[["Gender"]] <- c("Gender")
+assigned_levels[["Ageband"]] <- c("ageband")
+assigned_levels[["Gender"]] <- c("gender")
 
-# assign the intervals needed to create FiveYears
-
-assigned_rule <- vector(mode="list")
-assigned_rule[["CalendarTime"]][["FiveYears"]] <- list("split_in_bands","Year", c(2020,2025,2030))
 
 # assign the proportion rule
 proportion_rule <- vector(mode="list")
-proportion_rule[["Geography"]][["N"]] <- 99
+proportion_rule[["Ageband"]][["N"]] <- 99
 proportion_rule[["Gender"]][["N"]] <- 99
 
 # assign the order
 
 assigned_order <- vector(mode="list")
-assigned_order[["Geography"]][["Location"]] <- "order_Location"
+assigned_order[["Ageband"]][["ageband"]] <- "ageband_num"
 
 # apply the function
 
-data_example[, order_Location := fcase(
-  Location == "Toronto", 1L,
-  Location == "Paris", 3L,
-  Location == "New York", 2L
-)]
-
 output <- Cube(input = data_example,
-               dimensions = c("Geography","CalendarTime","Gender"),
+               dimensions = c("Ageband","Gender"),
                levels = assigned_levels,
-               measures = c("N"),
-               computetotal = c("Gender"),
-               rule_from_numeric_to_categorical = assigned_rule,
+               measures = c("N","age","followup"),
+               computetotal = c("Ageband","Gender"),
+               statistics = list(
+                 list(c("sum") ,c("N")),
+                 list(c("proportion"),c("N")),
+                 list(c("mean","sd"),c("age")),
+                 list(c("median"),c("followup"))
+               ),
                summary_threshold = 100,
                order = assigned_order,
                proportion = proportion_rule
 )
+
 
 View(output)
 fwrite(output,file=paste0(diroutput,"/output.csv"))
