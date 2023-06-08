@@ -137,12 +137,21 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   
   # Find the first non NA value for multiple levels dimensions
   multiple_levels <- levels[sapply(levels, function(x) length(x) > 1)]
-  input <- input[, (names(multiple_levels)) := lapply(multiple_levels, function(x) {
-    fcoalesce(input[, lapply(.SD, as.character), .SDcols = x])
-  })]
+  if (length(multiple_levels) != 0) {
+    input <- input[, (names(multiple_levels)) := lapply(multiple_levels, function(x) {
+      fcoalesce(input[, lapply(.SD, as.character), .SDcols = x])
+    })]
+    
+    # Remove unnecessary columns and reorder the remaining ones
+    input[, (unlist(multiple_levels)) := NULL]
+  }
   
-  # Remove unnecessary columns and reorder the remaining ones
-  input[, (unlist(multiple_levels)) := NULL]
+  single_levels <- levels[sapply(levels, function(x) length(x) == 1)]
+  if (length(single_levels) != 0) {
+    for (name_lvl in names(single_levels)) {
+      setnames(input, single_levels[[name_lvl]], name_lvl)
+    }
+  }
   
   # Create propotion
   if (!is.null(proportion)) {
@@ -158,6 +167,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
           
           measure_name <- paste(proportion_measure, "denominator", sep = "_")
           setnames(temp, paste(proportion_measure, "sum", sep = "_"), measure_name)
+          
           cols_keep <- c(measure_name, dimensions, paste(setdiff(dimensions, dm), "order", sep = "_"))
           temp <- temp[, cols_keep, with = F]
           # temp <- temp[get(dm_order_name) != 99, (dm_order_name) := get(dm_order_name) - 1]
