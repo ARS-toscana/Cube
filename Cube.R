@@ -3,8 +3,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
                  proportion = NULL) {
   
   input <- copy(input)
-  
-  accepted_functions <- c("sum", "mean", "max", "min", "median", "mode")
+  accepted_functions <- c("sum", "mean", "max", "min", "median", "mode", "sd")
   
   # Calculate all possible combination of the dimensions
   dimensions_combinations <- c()
@@ -55,18 +54,18 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   measure_list <- c()
   measure_name_list <- c()
   
-  measures <- setdiff(measures, names(statistics))
-  
   if (!is.null(proportion)) {
     proportion_measures <- unique(sapply(proportion, names))
     
     for (measure in measures) {
       
       if (measure %in% proportion_measures && is.null(statistics[[measure]])) {
-        statistics[[measure]] <- "sum"
+        statistics[[measure]] <- c(statistics[[measure]], "sum")
       }
     }
   }
+  
+  measures <- intersect(measures, names(statistics))
   
   levels_vocabulary <- list()
   for (dm in dimensions) {
@@ -79,6 +78,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   }
   
   for (measure in measures) {
+    
     for (statistic in statistics[[measure]]) {
       
       if (!(statistic %in% accepted_functions)) {
@@ -91,13 +91,20 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
       
       measure_list <- paste(measure, statistic, sep = "_")
       measure_name_list <- measure
-      statistic <- parse(text = paste0("do.call(", statistic, ", .SD)"))
+      statistic <- parse(text = paste0("lapply(.SD,", statistic, ")"))
+      
       tmp <- data.table::groupingsets(input, jj = c(statistic),
                                       by = unlist(levels, use.names = F),
                                       sets = result.list,
                                       .SDcols = measure_name_list)
       
-      setnames(tmp, "V1", measure_list)
+      if(measure_name_list %in% colnames(tmp)) {
+        to_change_name <- measure_name_list
+      } else {
+        to_change_name <- "V1"
+      }
+      
+      setnames(tmp, to_change_name, measure_list)
       # setnames(tmp, paste0("V", seq_along(measures)), measure_list)
       
       tmp_2 <- if (!exists("tmp_2")) copy(tmp) else cbind(tmp_2, tmp[, ncol(tmp), with = F])
@@ -118,17 +125,21 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   # Filter to remove total for not necessary columns
   not_computetotal <- setdiff(names(levels), computetotal)
   max_level <- lapply(levels, function(x) x[[length(x)]])
-  input <- na.omit(input, unlist(max_level[not_computetotal]))
+  if (!is.null(unlist(max_level[not_computetotal]))) {
+    input <- na.omit(input, unlist(max_level[not_computetotal]))
+  }
   
   # For each dimension create an order column with max as 99. In case need to compute the total create a new category 
   order_cols <- c()
   for (dm in names(levels)) {
     new_col <- paste(dm, "order", sep = "_")
     
-    input[, (new_col) := rowSums(is.na(.SD)) + 1, .SDcols = levels[[dm]]]
+    last_lvl <- levels[[dm]][[length(levels[[dm]])]]
+    
+    input[, (new_col) := rowSums(is.na(.SD)) + 1, .SDcols = last_lvl]
     
     if (dm %in% computetotal) {
-      input[is.na(get(dm)), (dm) := paste0("All", dm)]
+      input[is.na(get(last_lvl)), (last_lvl) := paste0("All", dm)]
     } 
     
     input[get(new_col) == max(get(new_col)), (new_col) := 99]
