@@ -37,8 +37,8 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   
   # Add new variables based on existing levels
   for (dm in names(levels)) {
-    for (new_var in names(assigned_rule[[dm]])) {
-      detail_new_var <- assigned_rule[[dm]][[new_var]]
+    for (new_var in names(rule_from_numeric_to_categorical[[dm]])) {
+      detail_new_var <- rule_from_numeric_to_categorical[[dm]][[new_var]]
       if (detail_new_var[[1]] == "split_in_bands") {
         
         cut_labels <- c()
