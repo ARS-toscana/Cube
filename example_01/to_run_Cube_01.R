@@ -58,3 +58,6 @@ output <- Cube(input = data_example,
                summary_threshold = 100,
                order = assigned_order
 )
+
+View(output)
+fwrite(output,file=paste0(thisdir,"/output/output.csv"))
