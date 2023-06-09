@@ -66,6 +66,13 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
     }
   }
   
+  if (is.null(statistics)) {
+    statistics <- list()
+    for (measure in measures) {
+      statistics[[measure]] <- "sum"
+    }
+  }
+  
   measures <- intersect(measures, names(statistics))
   
   levels_vocabulary <- list()
@@ -117,8 +124,10 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
     }
   }
   
-  input <- tmp_2
-  rm(tmp_2)
+  if (exists("tmp_2")) {
+    input <- tmp_2
+    rm(tmp_2)
+  }
   
   # Calculate the statistics
   # tmp <- data.table::groupingsets(input, j = c(eval(statistic_list)),
