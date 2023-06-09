@@ -1,6 +1,6 @@
 Cube <- function(input, dimensions, levels, measures, statistics = NULL, computetotal = NULL,
                  rule_from_numeric_to_categorical = NULL, order = NULL, label = NULL, summary_threshold = NULL,
-                 proportion = NULL) {
+                 proportion = NULL, savhierarchy = F) {
   
   input <- copy(input)
   accepted_functions <- c("sum", "mean", "max", "min", "median", "mode", "sd")
@@ -22,6 +22,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
     result.df <- expand.grid(test)
     result.list <- unique(c(result.list, lapply(apply(result.df, 1, identity), unlist, use.names = F)))
   }
+  result.list <- c(result.list, list(character()))
   
   if (!is.null(order)) {
     for (dm in names(order)){
@@ -75,6 +76,10 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
       lvl_voc[, (total_lvl) := total_lvl]
     } 
     levels_vocabulary[[dm]] <- lvl_voc
+  }
+  
+  if (savhierarchy) {
+    assign("ouput_Hierarchy", levels_vocabulary, envir = parent.frame())
   }
   
   for (measure in measures) {
@@ -132,7 +137,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   # For each dimension create an order column with max as 99. In case need to compute the total create a new category 
   order_cols <- c()
   for (dm in names(levels)) {
-    new_col <- paste(dm, "order", sep = "_")
+    new_col <- paste(dm, "level_order", sep = "-")
     
     last_lvl <- levels[[dm]][[length(levels[[dm]])]]
     
@@ -169,7 +174,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
     for (dm in names(proportion)) {
       for (proportion_measure in names(proportion[[dm]])) {
         for (denominator in proportion[[dm]][[proportion_measure]]) {
-          dm_order_name <- paste(dm, "order", sep = "_")
+          dm_order_name <- paste(dm, "level_order", sep = "-")
           
           temp <- copy(input)[get(dm_order_name) == denominator, ]
           
@@ -179,23 +184,22 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
           measure_name <- paste(proportion_measure, "denominator", sep = "_")
           setnames(temp, paste(proportion_measure, "sum", sep = "_"), measure_name)
           
-          cols_keep <- c(measure_name, dimensions, paste(setdiff(dimensions, dm), "order", sep = "_"))
+          cols_keep <- c(measure_name, dimensions, paste(setdiff(dimensions, dm), "level_order", sep = "-"))
           temp <- temp[, cols_keep, with = F]
           # temp <- temp[get(dm_order_name) != 99, (dm_order_name) := get(dm_order_name) - 1]
           # temp <- temp[get(dm_order_name) == 99, (dm_order_name) := -1]
           # temp <- temp[get(dm_order_name) == -1, (dm_order_name) := .I[which.max(get(dm_order_name))] + 1]
           
           if (denominator == 99) {
-            denominator <- length(names(levels_vocabulary[[dm]]))
+            denominator_new <- length(names(levels_vocabulary[[dm]]))
           } 
-          level_to_recode <- names(levels_vocabulary[[dm]])[[denominator]]
+          level_to_recode <- names(levels_vocabulary[[dm]])[[denominator_new]]
           
           levels_vocabulary_df <- melt(levels_vocabulary[[dm]], id.vars = c(level_to_recode),
                                        measure.vars = names(levels_vocabulary[[dm]]),
                                        value.name = "V1")
           levels_vocabulary_df[, variable := NULL]
           levels_vocabulary_df <- unique(levels_vocabulary_df)
-          
           temp2 <- temp[levels_vocabulary_df, on = c(paste(dm, "==", level_to_recode)), allow.cartesian = T]
           temp2[, c(dm) := NULL]
           setnames(temp2, "V1", dm)
@@ -228,7 +232,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
                      all.x = T)
       setorderv(input, "V2")
       
-      setnames(input, "V2", paste(dm, "value-order", sep = "_"))
+      setnames(input, "V2", paste(dm, "value_order", sep = "-"))
     }
   }
   

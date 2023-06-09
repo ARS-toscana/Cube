@@ -62,9 +62,12 @@ output <- Cube(input = data_example,
                statistics = assigned_statistics,
                summary_threshold = 100,
                order = assigned_order,
-               proportion = proportion_rule
+               proportion = proportion_rule,
+               savhierarchy = T
 )
 
 
 View(output)
-fwrite(output,file=paste0(diroutput,"output.csv"))
+fwrite(output,file = paste0(diroutput,"output.csv"))
+invisible(lapply(names(ouput_Hierarchy), function(x) fwrite(ouput_Hierarchy[[x]],
+                                                  file = paste0(diroutput, "ouput-", x, "-Hierarchy.csv"))))
