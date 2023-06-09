@@ -1,5 +1,6 @@
 #-------------------------------
-# example 1: based on aggregated data, compute less granular levels of aggregation
+# example 3: based on aggregated data, compute less granular levels of aggregation, and calculate proportions
+# this example is an extension of example 1
 
 rm(list=ls(all.names=TRUE))
 
@@ -36,18 +37,23 @@ assigned_levels[["Gender"]] <- c("Gender")
 assigned_rule <- vector(mode="list")
 assigned_rule[["CalendarTime"]][["FiveYears"]] <- list("split_in_bands","Year", c(2020,2025,2030))
 
+# assign the proportion rule
+proportion_rule <- vector(mode="list")
+proportion_rule[["Geography"]][["N"]] <- 99
+proportion_rule[["Gender"]][["N"]] <- 99
+
 # assign the order
+
+assigned_order <- vector(mode="list")
+assigned_order[["Geography"]][["Location"]] <- "order_Location"
+
+# apply the function
 
 data_example[, order_Location := fcase(
   Location == "Toronto", 1L,
   Location == "Paris", 3L,
   Location == "New York", 2L
 )]
-
-assigned_order <- vector(mode="list")
-assigned_order[["Geography"]][["Location"]] <- "order_Location"
-
-# apply the function
 
 output <- Cube(input = data_example,
                dimensions = c("Geography","CalendarTime","Gender"),
@@ -56,7 +62,8 @@ output <- Cube(input = data_example,
                computetotal = c("Gender"),
                rule_from_numeric_to_categorical = assigned_rule,
                summary_threshold = 100,
-               order = assigned_order
+               order = assigned_order,
+               proportion = proportion_rule
 )
 
 View(output)
