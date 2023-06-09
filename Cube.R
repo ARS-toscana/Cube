@@ -150,7 +150,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
     
     last_lvl <- levels[[dm]][[length(levels[[dm]])]]
     
-    input[, (new_col) := rowSums(is.na(.SD)) + 1, .SDcols = last_lvl]
+    input[, (new_col) := rowSums(is.na(.SD)) + 1, .SDcols = levels[[dm]]]
     
     if (dm %in% computetotal) {
       input[is.na(get(last_lvl)), (last_lvl) := paste0("All", dm)]
