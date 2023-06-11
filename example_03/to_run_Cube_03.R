@@ -1,6 +1,6 @@
 #-------------------------------
-# example 3: based on aggregated data, compute less granular levels of aggregation, and calculate proportions
-# this example is an extension of example 1
+# Example 3: based on aggregated data, aggregate further, along 3 dimensions: Geography (3 levels), CalendarTime (2 levels), and Gender (2 levels). Also, counts of the lower level are computed as a proportion within the higher level  (order = 99), in the dimensions Gender and Geography. 
+# This example is an extension of Example 1
 
 rm(list=ls(all.names=TRUE))
 
@@ -12,48 +12,50 @@ thisdir <- setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 dirinput <- paste0(thisdir,"/input/")
 diroutput <- paste0(thisdir,"/output/")
 
-#load function
-# source(paste0(thisdir,"/../Cube.R"))
-
 # load data.table
 if (!require("data.table")) install.packages("data.table")
 library(data.table)
 
-source("../Cube.R")
+#load function
+# source(paste0(thisdir,"/../Cube.R"))
 
 #load input
-data_example <- fread(paste0(thisdir,"/input/data_example1.csv"), sep = ",")
+data_example <- fread(paste0(thisdir,"/input/data_example3.csv"), sep = ",")
 
-#USE THE FUNCTION 
-
-# assign the levels of each dimension
-assigned_levels <- vector(mode="list")
-assigned_levels[["Geography"]] <- c("Location","Country","Continent")
-assigned_levels[["CalendarTime"]] <- c("Year","FiveYears")
-assigned_levels[["Gender"]] <- c("Gender")
-
-# assign the intervals needed to create FiveYears
-
-assigned_rule <- vector(mode="list")
-assigned_rule[["CalendarTime"]][["FiveYears"]] <- list("split_in_bands","Year", c(2020,2025,2030))
-
-# assign the proportion rule
-proportion_rule <- vector(mode="list")
-proportion_rule[["Geography"]][["N"]] <- 99
-proportion_rule[["Gender"]][["N"]] <- 99
-
-# assign the order
-
-assigned_order <- vector(mode="list")
-assigned_order[["Geography"]][["Location"]] <- "order_Location"
-
-# apply the function
+# generate the order of the values of the variable Location
 
 data_example[, order_Location := fcase(
   Location == "Toronto", 1L,
   Location == "Paris", 3L,
   Location == "New York", 2L
 )]
+
+# USE THE FUNCTION 
+
+# assign the mandatory argument assigned_levels, containing the levels of each dimension
+
+assigned_levels <- vector(mode="list")
+assigned_levels[["Geography"]] <- c("Location","Country","Continent")
+assigned_levels[["CalendarTime"]] <- c("Year","FiveYears")
+assigned_levels[["Gender"]] <- c("Gender")
+
+# assign the optional argument assigned_rule to have Cube create the second level of CalendarTime (FiveYears) 
+
+assigned_rule <- vector(mode="list")
+assigned_rule[["CalendarTime"]][["FiveYears"]] <- list("split_in_bands","Year", c(2020,2025,2030))
+
+# assign the optional argument assigned_order, containing the order of the values of the dimensions, only for the first level of the dimension Geography
+
+assigned_order <- vector(mode="list")
+assigned_order[["Geography"]][["Location"]] <- "order_Location"
+
+# assign the optional argument proportion_rule, containing the level that acts as a denominator for proportions
+
+proportion_rule <- vector(mode="list")
+proportion_rule[["Geography"]][["N"]] <- 99
+proportion_rule[["Gender"]][["N"]] <- 99
+
+# apply the function: note that the dimension Gender has its total computed, and that the statistics are not assigned, thus making Cube compute the default statistics (sum)
 
 output <- Cube(input = data_example,
                dimensions = c("Geography","CalendarTime","Gender"),
