@@ -1,5 +1,5 @@
 #-------------------------------
-# Example 2: based on individual-level data, generate a dataset containing descriptive statistics: counts of individuals (measure: N), mean and standard deviation of age (measure: age), and median of followup time (measure: followup). The statistics are calculated across 2 dimensions: Ageband (2 levels) and Gender (2 levels). Also, counts of the lower level are computed as a proportion within the higher level  (order = 99), in both dimensions. 
+# Example 2: based on individual-level data, generate a dataset containing descriptive statistics: counts of individuals (measure: N), mean and standard deviation of age (measure: age), median of followup time (measure: followup), and prevalence (statistics: 'mean') of a comorbidity stored in the binary variable 'diabetes' (measure: diabetes). The statistics are calculated across 2 dimensions: Ageband (2 levels) and Gender (2 levels). Also, counts of the lower level are computed as a proportion within the higher level  (order = 99), in both dimensions. 
 
 rm(list=ls(all.names=TRUE))
 
@@ -50,6 +50,7 @@ assigned_order[["Ageband"]][["ageband"]] <- "ageband_num"
 assigned_statistics <- vector(mode="list")
 assigned_statistics[["N"]] <- c("sum")
 assigned_statistics[["age"]] <- c("mean","sd")
+assigned_statistics[["diabetes"]] <- c("mean")
 assigned_statistics[["followup"]] <- "median"
 
 # apply the function: note that both dimensions have a total computed, and that the hierarachy datasets are saved in memory at the end of execution (savhhierarchy = T)
@@ -57,7 +58,7 @@ assigned_statistics[["followup"]] <- "median"
 output <- Cube(input = data_example,
                dimensions = c("Ageband","Gender"),
                levels = assigned_levels,
-               measures = c("N","age","followup"),
+               measures = c("N","age","diabetes","followup"),
                computetotal = c("Ageband","Gender"),
                statistics = assigned_statistics,
                summary_threshold = 100,
