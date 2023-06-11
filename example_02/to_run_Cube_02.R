@@ -1,5 +1,5 @@
 #-------------------------------
-# Example 2: based on individual-level data, generate a dataset containing descriptive statistics: counts of individuals (measure: N), mean and standard deviation of age (measure: age), median of followup time (measure: followup), and prevalence (statistics: 'mean') of a comorbidity stored in the binary variable 'diabetes' (measure: diabetes). The statistics are calculated across 2 dimensions: Ageband (2 levels) and Gender (2 levels). Also, counts of the lower level are computed as a proportion within the higher level  (order = 99), in both dimensions. 
+# Example 2: based on individual-level data, generate a dataset containing descriptive statistics: counts of individuals (measure: N), mean and standard deviation of age (measure: age), and median of followup time (measure: followup). The variable -exposure- is a stratum of interest, and is therefore assigned as the dimension Exposure, with 2 levels: -exposure- itself, and all the values together. The variables -ageband- and -gender- are categorical variables whose frequency across strata needs to be computed. To obtain this, they are assigned themselves as dimensions, Ageband (2 levels) and Gender (2 levels), and in both such dimensions counts of the lower level are computed as a proportion within the higher level (order = 99). 
 
 rm(list=ls(all.names=TRUE))
 
@@ -25,6 +25,9 @@ data_example <- fread(paste0(thisdir,"/input/data_example2.csv"), sep = ",")
 # create a 'count' variable
 data_example <- data_example[, N := 1]
 
+# cast 'diabets' as string (bug)
+
+data_example[, exposure := as.character(exposure)]
 
 #USE THE FUNCTION 
 
@@ -33,6 +36,7 @@ data_example <- data_example[, N := 1]
 assigned_levels <- vector(mode="list")
 assigned_levels[["Ageband"]] <- c("ageband")
 assigned_levels[["Gender"]] <- c("gender")
+assigned_levels[["Exposure"]] <- c("exposure")
 
 # assign the optional argument proportion_rule, containing the level that acts as a denominator for proportions
 
@@ -50,16 +54,15 @@ assigned_order[["Ageband"]][["ageband"]] <- "ageband_num"
 assigned_statistics <- vector(mode="list")
 assigned_statistics[["N"]] <- c("sum")
 assigned_statistics[["age"]] <- c("mean","sd")
-assigned_statistics[["diabetes"]] <- c("mean")
 assigned_statistics[["followup"]] <- "median"
 
-# apply the function: note that both dimensions have a total computed, and that the hierarachy datasets are saved in memory at the end of execution (savhhierarchy = T)
+# apply the function: note that both dimensions have a total computed, and that the hierarachy datasets are saved in memory at the end of execution (savhierarchy = T)
 
 output <- Cube(input = data_example,
-               dimensions = c("Ageband","Gender"),
+               dimensions = c("Ageband","Gender","Exposure"),
                levels = assigned_levels,
-               measures = c("N","age","diabetes","followup"),
-               computetotal = c("Ageband","Gender"),
+               measures = c("N","age","followup"),
+               computetotal = c("Ageband","Gender","Exposure"),
                statistics = assigned_statistics,
                summary_threshold = 100,
                order = assigned_order,
