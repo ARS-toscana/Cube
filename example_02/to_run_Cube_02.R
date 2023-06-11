@@ -25,7 +25,7 @@ data_example <- fread(paste0(thisdir,"/input/data_example2.csv"), sep = ",")
 # create a 'count' variable
 data_example <- data_example[, N := 1]
 
-# cast 'diabets' as string (bug)
+# cast 'exposure' as string (bug)
 
 data_example[, exposure := as.character(exposure)]
 
