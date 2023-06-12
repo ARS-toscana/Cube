@@ -146,6 +146,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   # For each dimension create an order column with max as 99. In case need to compute the total create a new category 
   order_cols <- c()
   for (dm in names(levels)) {
+    
     new_col <- paste(dm, "level_order", sep = "-")
     
     last_lvl <- levels[[dm]][[length(levels[[dm]])]]
@@ -153,6 +154,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
     input[, (new_col) := rowSums(is.na(.SD)) + 1, .SDcols = levels[[dm]]]
     
     if (dm %in% computetotal) {
+      input[, (last_lvl) := as.character(get(last_lvl))]
       input[is.na(get(last_lvl)), (last_lvl) := paste0("All", dm)]
     } 
     
