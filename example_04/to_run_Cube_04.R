@@ -28,6 +28,13 @@ data_example <- fread(paste0(thisdir,"/input/data_example4.csv"), sep = ",")
 assigned_levels <- vector(mode="list")
 assigned_levels[["Ageband"]] <- c("Ageband")
 
+# assign the argument assigned_statistics
+
+assigned_statistics <- vector(mode="list")
+for (col_name in c(algo_cols, "in_population")) {
+  assigned_statistics[[col_name]] <- "max"
+}
+
 # apply the function: note that the dimension Gender has its total computed, and that the statistics are not assigned, thus making Cube compute the default statistics (sum)
 
 output <- Cube(input = data_example,
@@ -35,7 +42,7 @@ output <- Cube(input = data_example,
                levels = assigned_levels,
                measures = c("prev_MS1", "prev_MS2", "prev_MS3", "prev_MS4", "prev_MS5", "in_population"),
                computetotal = c("Ageband"),
-               summary_threshold = 100
+               statistics = assigned_statistics
 )
 
 View(output)
