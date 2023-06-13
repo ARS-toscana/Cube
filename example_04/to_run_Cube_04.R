@@ -31,7 +31,7 @@ assigned_levels[["Ageband"]] <- c("Ageband")
 # assign the argument assigned_statistics
 
 assigned_statistics <- vector(mode="list")
-for (col_name in c(algo_cols, "in_population")) {
+for (col_name in c("prev_MS1", "prev_MS2", "prev_MS3", "prev_MS4", "prev_MS5", "in_population")) {
   assigned_statistics[[col_name]] <- "max"
 }
 
