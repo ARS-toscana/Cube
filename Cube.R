@@ -169,8 +169,10 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
       fcoalesce(input[, lapply(.SD, as.character), .SDcols = x])
     })]
     
+    to_remove_cols <- setdiff(unlist(multiple_levels), names(multiple_levels))
+    
     # Remove unnecessary columns and reorder the remaining ones
-    input[, (unlist(multiple_levels)) := NULL]
+    input[, (to_remove_cols) := NULL]
   }
   
   single_levels <- levels[sapply(levels, function(x) length(x) == 1)]
