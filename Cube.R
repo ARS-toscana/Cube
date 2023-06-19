@@ -147,7 +147,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
   order_cols <- c()
   for (dm in names(levels)) {
     
-    new_col <- paste(dm, "level_order", sep = "-")
+    new_col <- paste(dm, "LevelOrder", sep = "_")
     
     last_lvl <- levels[[dm]][[length(levels[[dm]])]]
     
@@ -185,7 +185,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
     for (dm in names(proportion)) {
       for (proportion_measure in names(proportion[[dm]])) {
         for (denominator in proportion[[dm]][[proportion_measure]]) {
-          dm_order_name <- paste(dm, "level_order", sep = "-")
+          dm_order_name <- paste(dm, "LevelOrder", sep = "_")
           
           temp <- copy(input)[get(dm_order_name) == denominator, ]
           
@@ -195,7 +195,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
           measure_name <- paste(proportion_measure, "denominator", sep = "_")
           setnames(temp, paste(proportion_measure, "sum", sep = "_"), measure_name)
           
-          cols_keep <- c(measure_name, dimensions, paste(setdiff(dimensions, dm), "level_order", sep = "-"))
+          cols_keep <- c(measure_name, dimensions, paste(setdiff(dimensions, dm), "LevelOrder", sep = "_"))
           temp <- temp[, cols_keep, with = F]
           # temp <- temp[get(dm_order_name) != 99, (dm_order_name) := get(dm_order_name) - 1]
           # temp <- temp[get(dm_order_name) == 99, (dm_order_name) := -1]
@@ -243,11 +243,11 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
                      all.x = T)
       setorderv(input, "V2")
       
-      setnames(input, "V2", paste(dm, "value_order", sep = "-"))
+      setnames(input, "V2", paste(dm, "ValueOrder", sep = "_"))
     }
   }
   
-  level_label_names <- paste(names(levels), "label_value", sep = "-")
+  level_label_names <- paste(names(levels), "LabelValue", sep = "_")
   setnames(input, names(levels), level_label_names)
   
   if (is.numeric(summary_threshold)) {
