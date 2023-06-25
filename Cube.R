@@ -30,7 +30,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
         tmp <- unique(input[, unlist(c(names(order[[dm]]), order[[dm]]), use.names = F), with = F])
         setorderv(tmp, unlist(order[[dm]]))
         order[[dm]][[names(order[[dm]])]] <- unlist(tmp[, names(order[[dm]]), with = F], use.names = F)
-
+        
       }
     }
   }
@@ -50,6 +50,28 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
       }
     }
   }
+  
+  # Check if the dimension is valid (higher dimension is multiple of lower one)
+  for (dm in names(levels)) {
+    if (length(levels[[dm]]) > 1) {
+      for (i in 2:length(levels[[dm]])) {
+        
+        test_df <- unique(input[, c(levels[[dm]][[i - 1]], levels[[dm]][[i]]), with = F])
+        
+        test_df_single_col <- test_df[, levels[[dm]][[i - 1]], with = F]
+        
+        if (any(table(test_df_single_col) > 1)) {
+          stop(paste("The assigned dimension", dm, "is not a dimension, because values",
+                     paste(names(table(test_df_single_col)[which(table(test_df_single_col) > 1)]), collapse = "/"),
+                     "of the level", levels[[dm]][[i - 1]], "are not uniquely assigned to one value in the next level",
+                     levels[[dm]][[i]]))
+        } 
+        
+      }
+    }
+  }
+  
+  
   
   statistic_list <- list()
   measure_list <- c()
@@ -101,7 +123,8 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
       #   statistic <- paste0("do.call(", statistic, ", .SD)")
       # }
       
-      measure_list <- paste(measure, statistic, sep = "_")
+      measure_name <- paste(measure, statistic, sep = "_")
+      measure_list <- c(measure_list, measure_name)
       measure_name_list <- measure
       statistic <- parse(text = paste0("lapply(.SD,", statistic, ")"))
       
@@ -116,7 +139,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
         to_change_name <- "V1"
       }
       
-      setnames(tmp, to_change_name, measure_list)
+      setnames(tmp, to_change_name, measure_name)
       # setnames(tmp, paste0("V", seq_along(measures)), measure_list)
       
       tmp_2 <- if (!exists("tmp_2")) copy(tmp) else cbind(tmp_2, tmp[, ncol(tmp), with = F])
@@ -221,7 +244,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
           
           input <- merge(input, temp2, by = cols_group_by, all.x = T)
           proportion_name <- paste("prop", dm, proportion_measure, denominator, sep = "_")
-
+          
           input[, (proportion_name) := get(paste(proportion_measure, "sum", sep = "_")) / get(measure_name)]
           
           input[, c(measure_name) := NULL]
@@ -237,7 +260,7 @@ Cube <- function(input, dimensions, levels, measures, statistics = NULL, compute
     for (dm in names(order)){
       ordered_list <- unlist(order[[dm]], use.names = F)
       ordered_list <- c(ordered_list, sort(setdiff(unique(input[[dm]]), ordered_list)))
-
+      
       input <- merge(input,
                      data.table::data.table(ordered_list, seq_along(ordered_list)),
                      by.x = dm,
