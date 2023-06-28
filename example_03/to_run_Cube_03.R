@@ -16,8 +16,8 @@ diroutput <- paste0(thisdir,"/output/")
 if (!require("data.table")) install.packages("data.table")
 library(data.table)
 
-#load function
-# source(paste0(thisdir,"/../Cube.R"))
+# load function
+source(paste0(thisdir,"/../Cube.R"))
 
 #load input
 data_example <- fread(paste0(thisdir,"/input/data_example3.csv"), sep = ",")
