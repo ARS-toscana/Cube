@@ -1,4 +1,4 @@
-Geography-label_value,N_sum,CalendarTime-label_value,Gender-label_value,Geography-level_order,CalendarTime-level_order,Gender-level_order,Geography-value_order
+Geography_LabelValue,N_sum,CalendarTime_LabelValue,Gender_LabelValue,Geography_LevelOrder,CalendarTime_LevelOrder,Gender_LevelOrder,Geography_ValueOrder
 Toronto,33,2020,AllGender,1,1,99,1
 Toronto,121,2021,AllGender,1,1,99,1
 Toronto,154,2020-2024,AllGender,1,99,99,1

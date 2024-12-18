@@ -1,4 +1,4 @@
-Geography-label_value,N_sum,CalendarTime-label_value,Gender-label_value,Geography-level_order,CalendarTime-level_order,Gender-level_order,prop_Geography_N_99,prop_Gender_N_99,Geography-value_order
+Geography_LabelValue,N_sum,CalendarTime_LabelValue,Gender_LabelValue,Geography_LevelOrder,CalendarTime_LevelOrder,Gender_LevelOrder,prop_Geography_N_99,prop_Gender_N_99,Geography_ValueOrder
 Toronto,33,2020,AllGender,1,1,99,0.417721518987342,1,1
 Toronto,21,2020,F,1,1,1,0.583333333333333,0.636363636363636,1
 Toronto,12,2020,M,1,1,1,0.27906976744186,0.363636363636364,1
